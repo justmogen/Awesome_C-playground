@@ -42,7 +42,9 @@ typedef struct HashTable
 LinkedList *allocate_list()
 {
     // Allocate memory for a LinkedList pointer
-    LinkedList *list = malloc(sizeof(LinkedList));
+    LinkedList *list = (LinkedList *)malloc(sizeof(LinkedList));
+    if (list != NULL)
+        list->next = NULL;
     return list;
 }
 
@@ -65,6 +67,10 @@ LinkedList *linkedlist_insert(LinkedList *list, Htb_item *item)
         list->next = node;
         return list;
     }
+    else
+    {
+        return NULL;
+    }
 
     LinkedList *temp = list;
 
@@ -84,17 +90,15 @@ Htb_item *linkedlist_remove(LinkedList *list)
 {
     // Removes the head of the LinkedList
     // and returns the item removed
-    if (!list)
-        return NULL;
 
-    if (!list->next)
+    if (list == NULL || list->item == NULL)
         return NULL;
 
     LinkedList *node = list->next;
     LinkedList *temp = list;
     temp->next = NULL;
     list = node;
-    Htb_item *myItem = NULL;
+    Htb_item *myItem = list->item;
     memcpy(temp->item, myItem, sizeof(Htb_item));
     free(temp->item->key);
     free(temp->item->value);
@@ -130,6 +134,7 @@ LinkedList **create_overflow_buckets(HashTable *table)
     {
         buckets[i] = NULL;
     }
+    return buckets;
 }
 
 void free_overflow_buckets(HashTable *table)
@@ -146,9 +151,9 @@ void free_overflow_buckets(HashTable *table)
 Htb_item *create_item(char *key, char *value)
 {
     // Creates a pointer to a new HashTable item
-    Htb_item *item = malloc(sizeof(Htb_item));
-    item->key = malloc(strlen(key) + 1);
-    item->value = malloc(strlen(value) + 1);
+    Htb_item *item = (Htb_item *)malloc(sizeof(Htb_item));
+    item->key = (char *)malloc(strlen(key) + 1);
+    item->value = (char *)malloc(strlen(value) + 1);
     strcpy(item->key, key);
     strcpy(item->value, value);
     return item;
@@ -157,7 +162,7 @@ Htb_item *create_item(char *key, char *value)
 HashTable *create_table(int size)
 {
     // Create a new HashTable with the size given
-    HashTable *table = malloc(sizeof(HashTable));
+    HashTable *table = (HashTable *)malloc(sizeof(HashTable));
     table->size = size;
     table->count = 0;
     table->items = (Htb_item **)calloc(table->size, sizeof(Htb_item *));
@@ -259,6 +264,10 @@ char *ht_search(HashTable *table, char *key)
 {
     // Searches the key in the table
     // Returns the value (if found) or NULL (if not found)
+
+    if (table == NULL || table->overflow_buckets == NULL)
+        return NULL;
+    
     int index = hash_function(key);
     Htb_item *item = table->items[index];
     LinkedList *head = table->overflow_buckets[index];
